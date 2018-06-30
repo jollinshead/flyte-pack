@@ -1,0 +1,24 @@
+---
+id: Bitbucket
+name: Bitbucket
+envs:
+  BITBUCKET_USER: "@user"
+  BITBUCKET_PASS: "@pass"
+  BITBUCKET_HOST: "@host"
+commands:
+- name: CreateRepo
+  input:
+    project: "@project"
+    name: "@name"
+  request:
+    type: POST
+    path: "@host/rest/api/1.0/projects/@project/repos"
+    auth:
+     user: "@user"
+     pass: "@pass"
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    data: '{ "name":"@name" }'
+
+

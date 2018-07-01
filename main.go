@@ -28,7 +28,6 @@ func main() {
 	}
 
 	hostUrl := getUrl(flyteHost)
-	packDef.HelpURL = getUrl("https://github.com/HotelsDotCom/flyte/blob/master/README.md")
 	p := flyte.NewPack(packDef, client.NewClient(hostUrl, 10*time.Second))
 	p.Start()
 	// Waits indefinitely

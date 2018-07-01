@@ -8,6 +8,9 @@ import (
 	"github.com/ghodss/yaml"
 	"io/ioutil"
 	"os"
+	"net/url"
+	"encoding/json"
+	"encoding/base64"
 )
 
 type Pack struct {
@@ -48,7 +51,7 @@ func NewPackDef(path string) (flyte.PackDef, error) {
 	}
 
 	envs, err := processEnvs(cfg)
-	if err = yaml.Unmarshal(b, &cfg); err != nil {
+	if err != nil {
 		return flyte.PackDef{}, errors.New(fmt.Sprintf("could not process environment variables, err: %s", err))
 	}
 
@@ -57,7 +60,12 @@ func NewPackDef(path string) (flyte.PackDef, error) {
 		return flyte.PackDef{}, errors.New(fmt.Sprintf("could not generate commands and/or events, err: %s", err))
 	}
 
-	return flyte.PackDef{Name: cfg.Name, Commands: commands, EventDefs: events}, nil
+	url, err := generateHelpUrl(cfg)
+	if err != nil {
+		return flyte.PackDef{}, errors.New(fmt.Sprintf("could not generate help url, err: %s", err))
+	}
+
+	return flyte.PackDef{Name: cfg.Name, Commands: commands, EventDefs: events, HelpURL: url}, nil
 }
 
 func processEnvs(cfg Pack) (map[string]string, error) {
@@ -69,6 +77,21 @@ func processEnvs(cfg Pack) (map[string]string, error) {
 		}
 	}
 	return envs, nil
+}
+
+func generateHelpUrl(p Pack) (*url.URL, error) {
+	b, err := json.Marshal(p)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("could not marshal pack into json, err: %s", err))
+	}
+
+	param := base64.StdEncoding.EncodeToString(b)
+	url, err := url.Parse(fmt.Sprintf("https://jollinshead.github.io/flyte-pack/?config=%s", param))
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("could not parse url, err: %s", err))
+	}
+
+	return url, nil
 }
 
 func (a Auth) Enabled() bool {

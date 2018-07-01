@@ -32,9 +32,70 @@ func newHandlerAndEvents(cfg Command, envs map[string]string) (func(input json.R
 			return nil, []flyte.EventDef{}, err
 		}
 		return handler, []flyte.EventDef{cd.successEvent, cd.failureEvent}, nil
+
+	case http.MethodGet:
+		handler, err := cd.createGetHandler()
+		if err != nil {
+			return nil, []flyte.EventDef{}, err
+		}
+		return handler, []flyte.EventDef{cd.successEvent, cd.failureEvent}, nil
 	}
 
 	return nil, []flyte.EventDef{}, errors.New(fmt.Sprintf("unknown request type '%s', ", cd.cfg.Request.Type))
+}
+
+func (cd *command) createGetHandler() (func(input json.RawMessage) flyte.Event, error) {
+
+	return func(input json.RawMessage) flyte.Event {
+
+		var in map[string]string
+		if err := json.Unmarshal(input, &in); err != nil {
+			logger.Error(err)
+			return flyte.Event{EventDef:cd.failureEvent, Payload:err}
+		}
+
+		// Resolve inputs
+		resolvedInputs := make(map[string]string)
+		for k, v := range cd.cfg.Input {
+			resolvedInputs[v] = in[k]
+		}
+
+		// Inject variable values in path and data
+		path := injectVars(cd.cfg.Request.Path, resolvedInputs, cd.envs)
+
+		req, err := cd.constructGetRequest(path)
+		if err != nil {
+			logger.Error(err)
+			return flyte.Event{EventDef:cd.failureEvent, Payload:err}
+		}
+
+		var payload interface{}
+		err = sendRequest(req, &payload)
+		if err != nil {
+			logger.Error(err)
+			return flyte.Event{EventDef:cd.failureEvent, Payload:err}
+		}
+
+		return flyte.Event{EventDef:cd.successEvent, Payload:payload}
+	}, nil
+}
+
+func (cd *command) constructGetRequest(path string) (*http.Request, error) {
+
+	r, err := http.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return r, err
+	}
+
+	for k, v := range cd.cfg.Request.Headers {
+		r.Header.Set(k, v)
+	}
+
+	if cd.cfg.Request.Auth.Enabled() {
+		r.SetBasicAuth(cd.cfg.Request.Auth.User, cd.cfg.Request.Auth.Pass)
+	}
+
+	return r, nil
 }
 
 func (cd *command) createPostHandler() (func(input json.RawMessage) flyte.Event, error) {
@@ -64,14 +125,10 @@ func (cd *command) createPostHandler() (func(input json.RawMessage) flyte.Event,
 		}
 
 		var payload interface{}
-		res, err := sendRequest(req, &payload)
+		err = sendRequest(req, &payload)
 		if err != nil {
 			logger.Error(err)
 			return flyte.Event{EventDef:cd.failureEvent, Payload:err}
-		}
-		if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-			logger.Error(err)
-			return flyte.Event{EventDef:cd.failureEvent, Payload:fmt.Sprintf("bad responce: code: %s, body: %+v", res.StatusCode, payload)}
 		}
 
 		return flyte.Event{EventDef:cd.successEvent, Payload:payload}
@@ -101,14 +158,17 @@ func (cd *command) constructPostRequest(path, data string) (*http.Request, error
 	return r, nil
 }
 
-func sendRequest(r *http.Request, responseBody interface{}) (*http.Response, error) {
+func sendRequest(r *http.Request, responseBody interface{}) error {
 	response, err := http.DefaultClient.Do(r)
 	if err != nil {
-		return response, err
+		return err
+	}
+	defer response.Body.Close()
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusBadRequest {
+		return errors.New(fmt.Sprintf("bad response: code: %s", response.StatusCode))
 	}
 
-	defer response.Body.Close()
-	return response, json.NewDecoder(response.Body).Decode(&responseBody)
+	return json.NewDecoder(response.Body).Decode(&responseBody)
 }
 
 func injectVars(s string, subs ...map[string]string) string {

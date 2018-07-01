@@ -92,7 +92,7 @@ func (cd *command) constructGetRequest(path string) (*http.Request, error) {
 	}
 
 	if cd.cfg.Request.Auth.Enabled() {
-		r.SetBasicAuth(cd.cfg.Request.Auth.User, cd.cfg.Request.Auth.Pass)
+		r.SetBasicAuth(injectVars(cd.cfg.Request.Auth.User,cd.envs), injectVars(cd.cfg.Request.Auth.Pass,cd.envs))
 	}
 
 	return r, nil
@@ -102,7 +102,7 @@ func (cd *command) createPostHandler() (func(input json.RawMessage) flyte.Event,
 
 	return func(input json.RawMessage) flyte.Event {
 
-		var in interface{}
+		var in map[string]string
 		if err := json.Unmarshal(input, &in); err != nil {
 			logger.Error(err)
 			return flyte.Event{EventDef:cd.failureEvent, Payload:err}
@@ -111,7 +111,7 @@ func (cd *command) createPostHandler() (func(input json.RawMessage) flyte.Event,
 		// Resolve inputs
 		resolvedInputs := make(map[string]string)
 		for k, v := range cd.cfg.Input {
-			resolvedInputs[v] = in.(map[string]string)[k]
+			resolvedInputs[v] = in[k]
 		}
 
 		// Inject variable values in path and data
@@ -137,12 +137,12 @@ func (cd *command) createPostHandler() (func(input json.RawMessage) flyte.Event,
 
 func (cd *command) constructPostRequest(path, data string) (*http.Request, error) {
 
-	b, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
+	//b, err := json.Marshal(data)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	r, err := http.NewRequest(http.MethodPost, path, bytes.NewBuffer(b))
+	r, err := http.NewRequest(http.MethodPost, path, bytes.NewBuffer([]byte(data)))
 	if err != nil {
 		return r, err
 	}
@@ -152,7 +152,7 @@ func (cd *command) constructPostRequest(path, data string) (*http.Request, error
 	}
 
 	if cd.cfg.Request.Auth.Enabled() {
-		r.SetBasicAuth(cd.cfg.Request.Auth.User, cd.cfg.Request.Auth.Pass)
+		r.SetBasicAuth(injectVars(cd.cfg.Request.Auth.User,cd.envs), injectVars(cd.cfg.Request.Auth.Pass,cd.envs))
 	}
 
 	return r, nil

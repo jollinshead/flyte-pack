@@ -1,16 +1,15 @@
-
 package config
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/HotelsDotCom/flyte-client/flyte"
 	"github.com/ghodss/yaml"
 	"io/ioutil"
-	"os"
 	"net/url"
-	"encoding/json"
-	"encoding/base64"
+	"os"
 )
 
 type Pack struct {

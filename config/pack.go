@@ -1,10 +1,9 @@
-
 package config
 
 import (
-	"github.com/HotelsDotCom/flyte-client/flyte"
 	"errors"
 	"fmt"
+	"github.com/HotelsDotCom/flyte-client/flyte"
 )
 
 func GenerateCommandsAndEvents(cfg Pack, envs map[string]string) ([]flyte.Command, []flyte.EventDef, error) {
@@ -16,7 +15,7 @@ func GenerateCommandsAndEvents(cfg Pack, envs map[string]string) ([]flyte.Comman
 			return []flyte.Command{}, []flyte.EventDef{}, errors.New(fmt.Sprintf("could not create handler, err: %s", err))
 		}
 
-		fc := flyte.Command{Name:v.Name, OutputEvents:OutputEvents, Handler:Handler}
+		fc := flyte.Command{Name: v.Name, OutputEvents: OutputEvents, Handler: Handler}
 		fcs = append(fcs, fc)
 		fed = append(fed, OutputEvents...)
 	}

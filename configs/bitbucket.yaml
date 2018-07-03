@@ -19,6 +19,7 @@ commands:
     headers:
       Content-Type: "application/json"
       Accept: "application/json"
-    data: '{ "name":"@name" }'
+    data: |-
+      { "name" : "@name" }
 
 

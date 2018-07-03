@@ -1,0 +1,57 @@
+---
+name: Jira
+envs:
+  JIRA_HOST: "@host"
+  JIRA_USER: "@user"
+  JIRA_PASSWORD: "@pass"
+commands:
+
+- name: GetIssue
+  input:
+    issueId: "@issue"
+  request:
+    type: GET
+    path: "@host/rest/api/2/issue/@issue"
+    auth: &auth
+     user: "@user"
+     pass: "@pass"
+    headers: &headers
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+- name: AddComment
+  input:
+    issueId: "@issue"
+    comment: "@comment"
+  request:
+    type: POST
+    path: "@host/rest/api/2/issue/@issue/comment"
+    auth: *auth
+    headers: *headers
+    data: |-
+      {
+          "body": "@comment"
+      }
+
+- name: Search
+  input:
+    jql: "@jql"
+  request:
+    type: POST
+    path: "@host/rest/api/2/search"
+    auth: *auth
+    headers: *headers
+    data: |-
+      {
+        "jql": "@jql",
+        "startAt": 0,
+        "maxResults": 15,
+        "fields": [
+            "summary",
+            "status",
+            "assignee"
+        ]
+      }
+
+
+

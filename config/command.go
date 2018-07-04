@@ -57,7 +57,7 @@ func (cd *command) createHandler() (func(input json.RawMessage) flyte.Event, err
 			return flyte.Event{EventDef: cd.failureEvent, Payload: err}
 		}
 
-		logger.Debug(fmt.Sprintf("successful event, payload: %+v", payload))
+		logger.Debug(fmt.Sprintf("%s payload: %+v", cd.successEvent.Name, payload))
 		return flyte.Event{EventDef: cd.successEvent, Payload: payload}
 	}, nil
 }

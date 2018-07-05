@@ -119,9 +119,10 @@ func sendRequest(r *http.Request) (interface{}, error) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusBadRequest {
-		return errors.New(fmt.Sprintf("bad response: code: %s", response.StatusCode)), nil
+		return nil, errors.New(fmt.Sprintf("bad response: code: %s", response.StatusCode))
 	}
 
 	var responseBody interface{}
-	return responseBody, json.NewDecoder(response.Body).Decode(&responseBody)
+	json.NewDecoder(response.Body).Decode(&responseBody)
+	return responseBody, nil
 }

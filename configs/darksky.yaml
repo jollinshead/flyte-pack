@@ -1,0 +1,25 @@
+---
+name: DarkSky
+envs:
+  DARKSKY_HOST: "@host"
+  DARKSKY_KEY: "@key"
+commands:
+
+- name: Forecast
+  input:
+    latitude: "@lat"
+    longitude: "@long"
+  request:
+    type: GET
+    path: "@host/forecast/@key/@lat,@long"
+
+- name: TimeMachine
+  input:
+    latitude: "@lat"
+    longitude: "@long"
+    unix-time: "@time"
+  request:
+    type: GET
+    path: "@host/forecast/@key/@lat,@long,@time"
+
+

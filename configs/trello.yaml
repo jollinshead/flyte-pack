@@ -1,0 +1,25 @@
+---
+id: Trello
+name: Trello
+envs:
+  TRELLO_HOST: "@host"
+  TRELLO_KEY: "@key"
+  TRELLO_TOKEN: "@token"
+commands:
+- name: GetLists
+  input:
+    boardId: "@board"
+  request:
+    type: GET
+    path: "@host/1/boards/@board/lists?cards=open&card_fields=all&filter=open&fields=all&key=@key&token=@token"
+
+- name: GetCard
+  input:
+    cardId: "@card"
+  request:
+    type: GET
+    path: "@host/1/cards/@card?key=@key&token=@token"
+
+
+
+

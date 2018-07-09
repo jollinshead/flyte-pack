@@ -1,0 +1,18 @@
+---
+name: Flyte
+envs:
+  FLYTE_RECIPIENT_HOST: "@host"
+commands:
+
+- name: GetFlow
+  input:
+    flow: "@flow"
+  request:
+    type: GET
+    path: "@host/v1/flows/@flow"
+    headers:
+      Accept: "application/x-yaml"
+
+
+
+
